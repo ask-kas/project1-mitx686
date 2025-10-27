@@ -95,6 +95,8 @@ def plot_toy_data(algo_name, features, labels, thetas):
     * thetas - the tuple (theta, theta_0) that is the output of the learning algorithm
     * algorithm - the string name of the learning algorithm used
     """
+    # #line below added by me
+    # plt.figure()
     # plot the points with labels represented as colors
     plt.subplots()
     colors = ['b' if label == 1 else 'r' for label in labels]
@@ -110,7 +112,7 @@ def plot_toy_data(algo_name, features, labels, thetas):
     # show the plot
     algo_name = ' '.join((word.capitalize() for word in algo_name.split(' ')))
     plt.suptitle('Classified Toy Data ({})'.format(algo_name))
-    plt.show()
+    # plt.show()
 
 def plot_tune_results(algo_name, param_name, param_vals, acc_train, acc_val):
     """

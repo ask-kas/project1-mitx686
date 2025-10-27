@@ -12,7 +12,7 @@ import random
 
 def get_order(n_samples):
     try:
-        with open(str(n_samples) + '.txt') as fp:
+        with open("./sentiment_analysis/" + str(n_samples) + '.txt') as fp:
             line = fp.readline()
             return list(map(int, line.split(',')))
     except FileNotFoundError:
@@ -216,6 +216,13 @@ def pegasos_single_step_update(
         completed.
     """
     # Your code here
+    if label*(theta.dot(feature_vector)+theta_0) <= 1:
+        theta = (1-eta*L)*theta + eta*label*feature_vector
+        theta_0 = theta_0 + eta*label
+    else:
+        theta = (1-eta*L)*theta 
+        theta_0 = theta_0
+    return(theta, theta_0)
     raise NotImplementedError
 
 
@@ -248,6 +255,17 @@ def pegasos(feature_matrix, labels, T, L):
         after T iterations through the feature matrix.
     """
     # Your code here
+    t = 0
+    theta = np.zeros(feature_matrix.shape[1])
+    theta_0 = 0
+    for _ in range(T):
+        for i in get_order(feature_matrix.shape[0]):
+            t += 1
+            eta = 1/np.sqrt(t)
+            theta, theta_0 = pegasos_single_step_update(feature_matrix[i], labels[i], 
+                                                        L, eta, theta, theta_0)
+    
+    return (theta, theta_0)
     raise NotImplementedError
 
 
@@ -285,6 +303,12 @@ def classify(feature_matrix, theta, theta_0):
         should be considered a positive classification.
     """
     # Your code here
+    classification = np.zeros(len(feature_matrix))
+    for i in range(len(feature_matrix)):
+        predict = theta.dot(feature_matrix[i]) + theta_0
+        classification[i] = 1 if predict >= 0.0001 else -1
+    
+    return classification
     raise NotImplementedError
 
 
@@ -322,6 +346,15 @@ def classifier_accuracy(
         accuracy of the trained classifier on the validation data.
     """
     # Your code here
+    theta, theta_0 = classifier(train_feature_matrix, train_labels, **kwargs)
+    train_classification = classify(train_feature_matrix, theta, theta_0)
+    val_classification = classify(val_feature_matrix, theta, theta_0)
+
+    train_acc = accuracy(train_labels, train_classification)
+    val_acc = accuracy(val_labels, val_classification)
+
+    return (train_acc, val_acc)
+
     raise NotImplementedError
 
 
@@ -336,13 +369,19 @@ def extract_words(text):
         count as their own words.
     """
     # Your code here
-    raise NotImplementedError
 
     for c in punctuation + digits:
         text = text.replace(c, ' ' + c + ' ')
     return text.lower().split()
 
+    raise NotImplementedError
 
+def stop_words():
+    stopwords = {}
+    with open('./sentiment_analysis/stopwords.txt', 'r') as f:
+        for word in f:
+            stopwords[word[:-1]] = 1 
+    return stopwords
 
 def bag_of_words(texts, remove_stopword=False):
     """
@@ -356,17 +395,20 @@ def bag_of_words(texts, remove_stopword=False):
         integer `index`.
     """
     # Your code here
-    raise NotImplementedError
     
     indices_by_word = {}  # maps word to unique index
+    stopword = stop_words()
+    # stopword = {}
+
     for text in texts:
         word_list = extract_words(text)
         for word in word_list:
             if word in indices_by_word: continue
-            if word in stopword: continue
+            if not remove_stopword and word in stopword: continue
             indices_by_word[word] = len(indices_by_word)
 
     return indices_by_word
+    raise NotImplementedError
 
 
 
@@ -387,10 +429,15 @@ def extract_bow_feature_vectors(reviews, indices_by_word, binarize=True):
         for word in word_list:
             if word not in indices_by_word: continue
             feature_matrix[i, indices_by_word[word]] += 1
-    if binarize:
+            
+    if not binarize:
         # Your code here
-        raise NotImplementedError
+        for i in range(len(reviews)):
+            for j in range(len(indices_by_word)):
+                feature_matrix[i, j] = 1 if feature_matrix[i, j] >= 1 else 0 
+
     return feature_matrix
+    raise NotImplementedError
 
 
 
